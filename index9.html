@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title>QR Code Generator - GoQR API</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f4f8;
+        display: flex;
+        justify-content: center;
+        padding: 40px;
+    }
+    .container {
+        background: white;
+        width: 420px;
+        padding: 25px;
+        border-radius: 14px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.08);
+    }
+    h2 {
+        margin-top: 0;
+        text-align: center;
+    }
+    input, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 15px;
+    }
+    button {
+        background: #2d7dff;
+        color: white;
+        cursor: pointer;
+        border: none;
+    }
+    button:hover {
+        background: #1e5fdd;
+    }
+    #qrPreview {
+        margin-top: 20px;
+        text-align: center;
+    }
+    #qrPreview img {
+        width: 200px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 8px;
+        background: #fff;
+    }
+    .history {
+        margin-top: 25px;
+    }
+    .history-item {
+        background: #f7f7fb;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>QR Code Generator</h2>
+
+    <!-- Profile -->
+    <div id="profileSection" style="text-align:center; margin-bottom:15px;">
+        <img id="userPic" src="" width="70" style="border-radius:50%; display:none;">
+        <h3 id="userName" style="margin:5px 0;"></h3>
+    </div>
+
+    <input type="text" id="qrText" placeholder="Text লিখুন...">
+    <input type="text" id="nameInput" placeholder="Saif Mahamud">
+    <input type="text" id="picInput" placeholder="Saif.jpeg">
+    <button onclick="generateQR()">Generate QR</button>
+
+    <div id="qrPreview"></div>
+
+    <h3 class="history">History</h3>
+    <div id="historyList"></div>
+</div>
+
+<script>
+function saveProfile() {
+    const name = document.getElementById('nameInput').value;
+    const pic = document.getElementById('picInput').value;
+
+    if (name) localStorage.setItem("qrUserName", name);
+    if (pic) localStorage.setItem("qrUserPic", pic);
+
+    loadProfile();
+}
+
+function loadProfile() {
+    const name = localStorage.getItem("qrUserName");
+    const pic = localStorage.getItem("qrUserPic");
+
+    if (pic) {
+        document.getElementById("userPic").src = pic;
+        document.getElementById("userPic").style.display = "block";
+    }
+    if (name) {
+        document.getElementById("userName").innerText = name;
+    }
+}
+
+// Generate QR
+function generateQR() {
+    saveProfile();
+
+    const text = document.getElementById("qrText").value;
+    if (!text) {
+        alert("Input text দিতে হবে!");
+        return;
+    }
+
+    const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`;
+
+    document.getElementById("qrPreview").innerHTML = `
+        <img src="${qrURL}">
+        <br><br>
+        <a href="${qrURL}" download="qrcode.png">
+            <button>Download QR</button>
+        </a>
+    `;
+
+    saveToHistory(text, qrURL);
+}
+
+// Save to history
+function saveToHistory(text, url) {
+    const oldHistory = JSON.parse(localStorage.getItem("qrHistory") || "[]");
+
+    oldHistory.unshift({ text, url });
+    localStorage.setItem("qrHistory", JSON.stringify(oldHistory));
+
+    loadHistory();
+}
+
+// Load history
+function loadHistory() {
+    const history = JSON.parse(localStorage.getItem("qrHistory") || "[]");
+    const historyDiv = document.getElementById("historyList");
+
+    historyDiv.innerHTML = "";
+    history.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+            <span>${item.text}</span>
+            <a href="${item.url}" download="qr.png">⬇️</a>
+        `;
+        historyDiv.appendChild(div);
+    });
+}
+
+loadProfile();
+loadHistory();
+</script>
+
+</body>
+</html>
